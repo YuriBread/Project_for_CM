@@ -12,11 +12,12 @@ from tkinter import *
 
 """КОД ГОВНА - РАБОТАЕТ, НО ХУЁВО, ПЕРЕДЕЛАТЬ"""
 
+text_area = None
 
 def process_command(event):
     """
     Функция по выполнению комманд
-    :param event: на вход строка введенная в окошко
+    :param event:
     :return: break
     """
 
@@ -34,15 +35,32 @@ def process_command(event):
 
     """Вот тут выполнение команды въебать нада желательно"""
 
-    text_area.insert(END)
-
-    """Вот тут говорим что выше больше писать низя"""
-    text_area.tag_remove("readonly", "1.0", END)
-    text_area.tag_add("readonly", "1.0", "insert linestart")
+    text_area.insert(END, "\n")
 
     text_area.see(END)
 
     return "break"
+
+
+def check_protection(event):
+    """
+    Защита: разрешает писать только на самой последней строке
+    :param event:
+    :return: break
+    """
+
+    """Получаем индекс первой строки"""
+    last_line_start = text_area.index("end-1c linestart")
+
+    """Если курсор находится выше этой строки — блокируем любой ввод или стирание"""
+    if text_area.compare("insert", "<", last_line_start):
+        return "break"
+
+    """Защита от Backspace: не даем пользователю стереть перенос строки и уйти на строку выше"""
+    if event.keysym == "BackSpace" and text_area.compare("insert", "==", last_line_start):
+        return "break"
+
+
 
 
 def execute_main():
@@ -50,6 +68,8 @@ def execute_main():
     Главная функция программы
     :return: а вот ничего она не возвращает беееее
     """
+
+    global text_area
 
     window = Tk()
 
@@ -69,11 +89,12 @@ def execute_main():
     text_area.pack(fill=BOTH, expand=True)
 
     """Вот это надо чтобы прошлый текст можно было только читать"""
-    text_area.tag_config("readonly", background="#1e1e1e")
-    text_area.bind("<Key>", lambda e: "break" if "readonly" in text_area.tag_names("insert") else None)
+    text_area.bind("<Key>", check_protection)
 
     """Привязываем клавишу Enter"""
     text_area.bind("<Return>", process_command)
+
+    text_area.focus_set()
 
     window.mainloop()
 
