@@ -1,18 +1,60 @@
 import sys
-import os
-from email.mime import text
-from multiprocessing.dummy import current_process
-
-from utils.commands_defs import *
 """Для получения абсолютного пути"""
-
+import os
 from tkinter import *
 """Для создания графического интерфейса"""
 
 
-"""КОД ГОВНА - РАБОТАЕТ, НО ХУЁВО, ПЕРЕДЕЛАТЬ"""
 
+"""Глобальная переменная нужна чтобы код не выдавал ошибки"""
 text_area = None
+
+
+
+def ls_command(*args):
+    """
+    Функция, вызванная командой заглушкой
+    :param args: любой массив
+    :return: нет
+    """
+    text_area.insert(END, f"ls {' '.join(args)}")
+    """
+    arg_list = {
+        "example": "example"
+    }
+    if args[0] in arg_list:
+        text_area.insert(END, f"ls {' '.join(args)}")
+    else:
+        text_area.insert(END, "Введены неверные аргументы")
+    """
+
+def cd_command(*args):
+    """
+    Функция, вызванная командой заглушкой
+    :param args: любой массив
+    :return: нет
+    """
+    text_area.insert(END, f"cd {' '.join(args)}")
+    """
+    arg_list = {
+        "example": "example"
+    }
+    if args[0] in arg_list:
+        text_area.insert(END, f"ls {' '.join(args)}")
+    else:
+        text_area.insert(END, "Введены неверные аргументы")
+    """
+
+def exit_command(*args):
+    """
+    Функция, вызванная коммандой выхода из программы
+    Выходит из программы
+    :param args: Вообще сюда должно быть передано пустое множество
+    :return: нет
+    """
+    sys.exit(0)
+
+
 
 def process_command(event):
     """
@@ -33,13 +75,17 @@ def process_command(event):
 
     text_area.insert(END, "\n")
 
-    """Вот тут выполнение команды въебать нада желательно"""
+    if command in commands:
+        commands[command](*args)
+    else:
+        text_area.insert(END, "Введена неправильная команда")
 
     text_area.insert(END, "\n")
 
     text_area.see(END)
 
     return "break"
+
 
 
 def check_protection(event):
@@ -59,7 +105,6 @@ def check_protection(event):
     """Защита от Backspace: не даем пользователю стереть перенос строки и уйти на строку выше"""
     if event.keysym == "BackSpace" and text_area.compare("insert", "==", last_line_start):
         return "break"
-
 
 
 
@@ -98,13 +143,7 @@ def execute_main():
 
     window.mainloop()
 
-    """
-        if command in commands:
-            
-                                                           Сделать тут проверку аргументов
-            commands[command](*args)
-        else:
-            print("Ошибка! Неизвестная комманда")"""
+
 
 if __name__ == '__main__':
     try:
