@@ -1,14 +1,9 @@
 import sys
-"""Для получения абсолютного пути"""
 import os
+from cmd import PROMPT
 from tkinter import *
-"""Для создания графического интерфейса"""
 
-
-
-"""Глобальная переменная нужна чтобы код не выдавал ошибки"""
 text_area = None
-
 
 
 def ls_command(*args):
@@ -17,16 +12,15 @@ def ls_command(*args):
     :param args: любой массив
     :return: нет
     """
-    text_area.insert(END, f"ls {' '.join(args)}")
-    """
-    arg_list = {
-        "example": "example"
-    }
-    if args[0] in arg_list:
-        text_area.insert(END, f"ls {' '.join(args)}")
+    arg_list = {"example": "example"}
+
+    if args and args[0] in arg_list:
+        text_area.insert(END, f"ls {''.join(args)}")
+    elif not args:
+        text_area.insert(END, "ls: вывод списка директорий (нет аргументов)")
     else:
         text_area.insert(END, "Введены неверные аргументы")
-    """
+
 
 def cd_command(*args):
     """
@@ -34,16 +28,10 @@ def cd_command(*args):
     :param args: любой массив
     :return: нет
     """
-    text_area.insert(END, f"cd {' '.join(args)}")
-    """
-    arg_list = {
-        "example": "example"
-    }
-    if args[0] in arg_list:
-        text_area.insert(END, f"ls {' '.join(args)}")
+    if args:
+        text_area.insert(END, f"cd {''.join(args)}")
     else:
-        text_area.insert(END, "Введены неверные аргументы")
-    """
+        text_area.insert(END, "cd: не указан путь")
 
 def exit_command(*args):
     """
@@ -71,7 +59,17 @@ def process_command(event):
 
     current_line = text_area.get("insert linestart", "insert lineend")
 
-    command, *args = current_line.split(" ")
+    if current_line.startswith(PROMPT):
+        current_line = current_line[len(PROMPT):]
+
+    tokens = current_line.strip().split()
+
+    if not tokens:
+        text_area.insert(END, f"\n{PROMPT}")
+        text_area.see(END)
+        return "break"
+
+    command, *args = tokens
 
     text_area.insert(END, "\n")
 
@@ -80,7 +78,7 @@ def process_command(event):
     else:
         text_area.insert(END, "Введена неправильная команда")
 
-    text_area.insert(END, "\n")
+    text_area.insert(END, f"\n{PROMPT}")
 
     text_area.see(END)
 
@@ -95,14 +93,17 @@ def check_protection(event):
     :return: break
     """
 
-    """Получаем индекс первой строки"""
     last_line_start = text_area.index("end-1c linestart")
+    prompt_end = text_area.index(f"{last_line_start} + {len(PROMPT)} c")
 
-    """Если курсор находится выше этой строки — блокируем любой ввод или стирание"""
+    allowed_keys = ["Left", "Right", "Up", "Down", "Home", "End", "Control_L", "Control_R"]
+    if event.keysym in allowed_keys:
+        return None
+
     if text_area.compare("insert", "<", last_line_start):
-        return "break"
+        if text_area.compare("insert", "<=", prompt_end):
+            return "break"
 
-    """Защита от Backspace: не даем пользователю стереть перенос строки и уйти на строку выше"""
     if event.keysym == "BackSpace" and text_area.compare("insert", "==", last_line_start):
         return "break"
 
@@ -118,10 +119,8 @@ def execute_main():
 
     window = Tk()
 
-    """Настройка GUI"""
     script_path = os.path.abspath(__file__)
-    window.title(str(script_path))
-    """Ето нада, чтобы указать VFS в заголовке окна"""
+    window.title("VFS main.py   ")
 
     window.geometry("600x600")
     window.resizable(width=False, height=False)
@@ -129,14 +128,13 @@ def execute_main():
     window.iconbitmap('../icon.ico')
 
 
-    """Текстовое окно"""
     text_area = Text(window, bg="#1e1e1e", fg="#f1f1f1", font=("Courier", 12), insertbackground="white")
     text_area.pack(fill=BOTH, expand=True)
 
-    """Вот это надо чтобы прошлый текст можно было только читать"""
+    text_area.insert(END, PROMPT)
+
     text_area.bind("<Key>", check_protection)
 
-    """Привязываем клавишу Enter"""
     text_area.bind("<Return>", process_command)
 
     text_area.focus_set()
